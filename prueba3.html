@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horario de Profesores y Guardias</title>
+  <style>
+    :root {
+      --color-primario: #4CAF50;
+      --color-secundario: #444;
+      --color-fondo: linear-gradient(to bottom, #000000, #ffffff);
+      --color-texto: #222;
+      --color-texto-claro: #fff;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--color-fondo);
+      color: var(--color-texto);
+      padding: 15px;
+      line-height: 1.5;
+    }
+
+    h2, h3 {
+      color: var(--color-texto-claro);
+      margin-top: 20px;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin-bottom: 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #f9f9f9;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    th {
+      background-color: var(--color-secundario);
+      color: var(--color-texto-claro);
+      position: sticky;
+      top: 0;
+    }
+
+    tr:hover {
+      background-color: #e3e3e3;
+    }
+
+    form {
+      background-color: #fff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background-color: var(--color-primario);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      padding: 10px;
+      margin-top: 5px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .alerta {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #fffbe6;
+      border: 1px solid #f5c518;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    
+    .guardia-patrio {
+      background-color: #ffeb3b;
+      font-weight: bold;
+    }
+
+    /* Estilos para móviles */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+        font-size: 14px;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
+      }
+      
+      h3 {
+        font-size: 1.2rem;
+      }
+      
+      th, td {
+        padding: 8px 5px;
+        font-size: 12px;
+      }
+      
+      form {
+        padding: 10px;
+      }
+      
+      input, select, button {
+        padding: 8px;
+      }
+    }
+
+    /* Estilos para tablets y pantallas medianas */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .table-container {
+        margin-bottom: 15px;
+      }
+      
+      th, td {
+        padding: 10px 8px;
+      }
+    }
+
+    /* Estilos para formularios en pantallas grandes */
+    @media (min-width: 769px) {
+      .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+      
+      .form-group {
+        flex: 1;
+        min-width: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h2>Profesores y sus horarios</h2>
+<div class="table-container">
+  <table id="tabla-profesores">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Lunes</th>
+        <th>Martes</th>
+        <th>Miércoles</th>
+        <th>Jueves</th>
+        <th>Viernes</th>
+        <th>Guardia</th>
+        <th>Guardia Patio</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-cuerpo"></tbody>
+  </table>
+</div>
+
+<h3>Registrar Falta de Profesor</h3>
+<form id="form-falta">
+  <div class="form-row">
+    <div class="form-group">
+      <label for="profesor-falta">Profesor:</label>
+      <input type="text" id="profesor-falta" required>
+    </div>
+    <div class="form-group">
+      <label for="dia-falta">Día:</label>
+      <select id="dia-falta">
+        <option value="Lunes">Lunes</option>
+        <option value="Martes">Martes</option>
+        <option value="Miércoles">Miércoles</option>
+        <option value="Jueves">Jueves</option>
+        <option value="Viernes">Viernes</option>
+      </select>
+    </div>
+  </div>
+  <button type="submit">Registrar Falta</button>
+</form>
+
+<!-- Aquí va el reporte de falta -->
+<div id="reporte-falta" class="alerta" style="display: none;"></div>
+
+<h3>Agregar Profesor</h3>
+<form id="form-agregar">
+  <div class="form-group">
+    <label for="profesor-nombre">Nombre del Profesor:</label>
+    <input type="text" id="profesor-nombre" required>
+  </div>
+  
+  <div class="form-row">
+    <div class="form-group">
+      <label for="horario-lunes">Lunes:</label>
+      <input type="text" id="horario-lunes" placeholder="8-10 (Matemáticas)" required>
+    </div>
+    <div class="form-group">
+      <label for="horario-martes">Martes:</label>
+      <input type="text" id="horario-martes" placeholder="10-12 (Lengua)" required>
+    </div>
+    <div class="form-group">
+      <label for="horario-miercoles">Miércoles:</label>
+      <input type="text" id="horario-miercoles" placeholder="8-10 (Matemáticas)" required>
+    </div>
+    <div class="form-group">
+      <label for="horario-jueves">Jueves:</label>
+      <input type="text" id="horario-jueves" placeholder="12-14 (Ciencias)" required>
+    </div>
+    <div class="form-group">
+      <label for="horario-viernes">Viernes:</label>
+      <input type="text" id="horario-viernes" placeholder="8-10 (Filosofía)" required>
+    </div>
+  </div>
+  
+  <div class="form-row">
+    <div class="form-group">
+      <label for="guardi">Día de Guardia:</label>
+      <select id="guardi">
+        <option value="">Sin guardia</option>
+        <option value="Lunes">Lunes</option>
+        <option value="Martes">Martes</option>
+        <option value="Miércoles">Miércoles</option>
+        <option value="Jueves">Jueves</option>
+        <option value="Viernes">Viernes</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="hora-guardia">Horario Guardia:</label>
+      <input type="text" id="hora-guardia" placeholder="10-12">
+    </div>
+    <div class="form-group">
+      <label for="guardia-patrio">Guardia en Patio:</label>
+      <select id="guardia-patrio">
+        <option value="No">No</option>
+        <option value="Sí">Sí</option>
+      </select>
+    </div>
+  </div>
+  
+  <button type="submit">Agregar Profesor</button>
+</form>
+
+<h3>Eliminar Profesor</h3>
+<form id="form-eliminar">
+  <div class="form-group">
+    <label for="profesor-eliminar">Profesor a eliminar:</label>
+    <input type="text" id="profesor-eliminar" required>
+  </div>
+  <button type="submit">Eliminar Profesor</button>
+</form>
+
+<script>
+  const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+
+  // Cargar profesores desde localStorage o usar los predeterminados
+  let profesores = JSON.parse(localStorage.getItem('profesores')) || [
+    {
+      nombre: "María López",
+      horario: [
+        "8-10 (Matemáticas - 2ºA)",
+        "10-12 (Lengua - 1ºB)",
+        "",
+        "10-12 (Lengua - 1ºB)",
+        "8-10 (Matemáticas - 2ºA)"
+      ],
+      guardia: "Miércoles",
+      horaGuardia: "10-12",
+      guardiaPatio: "Sí"
+    },
+    {
+      nombre: "Juan Pérez",
+      horario: [
+        "",
+        "12-14 (Historia - 3ºC)",
+        "8-10 (Geografía - 3ºA)",
+        "",
+        ""
+      ],
+      guardia: "Viernes",
+      horaGuardia: "8-10",
+      guardiaPatio: "No"
+    }
+  ];
+
+  const tabla = document.getElementById("tabla-cuerpo");
+
+  function estaEnElCentro(horario) {
+    return horario.some(h => h !== "");
+  }
+
+  function guardarEnLocalStorage() {
+    localStorage.setItem('profesores', JSON.stringify(profesores));
+  }
+
+  function renderTabla() {
+    tabla.innerHTML = "";
+    profesores.forEach((profesor) => {
+      if (!estaEnElCentro(profesor.horario)) return;
+
+      const fila = document.createElement("tr");
+      const celdaNombre = document.createElement("td");
+      celdaNombre.textContent = profesor.nombre;
+      fila.appendChild(celdaNombre);
+
+      profesor.horario.forEach(hora => {
+        const celda = document.createElement("td");
+        celda.textContent = hora || "-";
+        fila.appendChild(celda);
+      });
+
+      // Celda de guardia con horario
+      const celdaGuardia = document.createElement("td");
+      if (profesor.guardia) {
+        celdaGuardia.textContent = `${profesor.guardia} (${profesor.horaGuardia})`;
+      } else {
+        celdaGuardia.textContent = "-";
+      }
+      fila.appendChild(celdaGuardia);
+      
+      // Celda de guardia en patio
+      const celdaGuardiaPatio = document.createElement("td");
+      celdaGuardiaPatio.textContent = profesor.guardiaPatio || "No";
+      if (profesor.guardiaPatio === "Sí") {
+        celdaGuardiaPatio.classList.add("guardia-patrio");
+      }
+      fila.appendChild(celdaGuardiaPatio);
+
+      tabla.appendChild(fila);
+    });
+  }
+
+  renderTabla();
+
+  // Funcionalidad para registrar la falta de un profesor
+  document.getElementById("form-falta").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const nombre = document.getElementById("profesor-falta").value.trim();
+    const dia = document.getElementById("dia-falta").value;
+    const indexDia = dias.indexOf(dia);
+
+    const profesor = profesores.find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
+
+    if (!profesor) return alert("Profesor no encontrado.");
+    if (!estaEnElCentro(profesor.horario)) return alert("Este profesor no está en el centro.");
+
+    const clase = profesor.horario[indexDia];
+    if (!clase || clase.trim() === "") return alert(`${profesor.nombre} no tiene clases ese día.`);
+
+    const franja = clase.split(" ")[0];
+    const grupo = clase.match(/\(([^)]+)\)/)?.[1] || "Grupo desconocido";
+
+    const profesoresDisponibles = profesores.filter(p =>
+      estaEnElCentro(p.horario) &&
+      p.nombre !== profesor.nombre &&
+      (!p.horario[indexDia] || p.horario[indexDia].trim() === "")
+    ).map(p => p.nombre);
+
+    const reporte = 
+      `<strong>${profesor.nombre}</strong> faltará el <strong>${dia}</strong>.<br><br>
+      <strong>Clase que queda libre:</strong> ${franja} - ${grupo}<br><br>
+      <strong>Profesores disponibles para cubrir:</strong><br>
+      ${profesoresDisponibles.length > 0 ? profesoresDisponibles.join(", ") : "<em>No hay disponibles</em>"}
+    `;
+
+    const divReporte = document.getElementById("reporte-falta");
+    divReporte.innerHTML = reporte;
+    divReporte.style.display = "block";
+    
+    document.getElementById("profesor-falta").value = "";
+  });
+
+  // Funcionalidad para eliminar un profesor por nombre
+  document.getElementById("form-eliminar").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const nombreEliminar = document.getElementById("profesor-eliminar").value.trim();
+    const indexEliminar = profesores.findIndex(p => p.nombre.toLowerCase() === nombreEliminar.toLowerCase());
+
+    if (indexEliminar === -1) {
+      return alert("Profesor no encontrado.");
+    }
+
+    profesores.splice(indexEliminar, 1);
+    guardarEnLocalStorage();
+    renderTabla();
+    document.getElementById("profesor-eliminar").value = "";
+  });
+
+  // Funcionalidad para agregar un nuevo profesor
+  document.getElementById("form-agregar").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const nombre = document.getElementById("profesor-nombre").value.trim();
+    const horarios = [
+      document.getElementById("horario-lunes").value.trim(),
+      document.getElementById("horario-martes").value.trim(),
+      document.getElementById("horario-miercoles").value.trim(),
+      document.getElementById("horario-jueves").value.trim(),
+      document.getElementById("horario-viernes").value.trim()
+    ];
+    const guardia = document.getElementById("guardi").value;
+    const horaGuardia = document.getElementById("hora-guardia").value.trim();
+    const guardiaPatio = document.getElementById("guardia-patrio").value;
+
+    const nuevoProfesor = {
+      nombre: nombre,
+      horario: horarios,
+      guardia: guardia,
+      horaGuardia: horaGuardia,
+      guardiaPatio: guardiaPatio
+    };
+
+    profesores.push(nuevoProfesor);
+    guardarEnLocalStorage();
+    renderTabla();
+    
+    // Limpiar el formulario
+    document.getElementById("form-agregar").reset();
+  });
+</script>
+
+</body>
+</html>
